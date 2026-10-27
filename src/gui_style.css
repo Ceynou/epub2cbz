@@ -1,0 +1,231 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    font-size: 14px;
+}
+
+.app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 12px;
+    gap: 8px;
+    transition: background 0.15s;
+}
+
+.app.drag-active {
+    background: #2a2a3e;
+    outline: 2px dashed #cba6f7;
+    outline-offset: -8px;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #45475a;
+}
+
+.toolbar h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #cba6f7;
+    white-space: nowrap;
+}
+
+.toolbar-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 6px 14px;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    background: #313244;
+    color: #cdd6f4;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s;
+}
+
+button:hover:not(:disabled) {
+    background: #45475a;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.convert-button {
+    background: #cba6f7;
+    color: #1e1e2e;
+    font-weight: 600;
+    padding: 8px 32px;
+    font-size: 15px;
+}
+
+.convert-button:hover:not(:disabled) {
+    background: #b4befe;
+}
+
+.info-bar {
+    padding: 4px 8px;
+    background: #313244;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #a6adc8;
+}
+
+.file-list {
+    flex: 1;
+    min-height: 100px;
+    overflow-y: auto;
+    background: #181825;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+.drop-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 80px;
+    color: #585b70;
+    font-size: 15px;
+    border: 2px dashed #313244;
+    border-radius: 6px;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    font-size: 13px;
+    border-bottom: 1px solid #1e1e2e;
+    border-left: 3px solid transparent;
+}
+
+.file-item.file-processing {
+    border-left-color: #f9e2af;
+    background: #1e1e2e;
+}
+
+.file-item.file-done {
+    border-left-color: #a6e3a1;
+}
+
+.file-item.file-failed {
+    border-left-color: #f38ba8;
+}
+
+.file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 12px;
+}
+
+.file-status {
+    font-size: 11px;
+    color: #585b70;
+    white-space: nowrap;
+}
+
+.file-processing .file-status { color: #f9e2af; }
+.file-done .file-status { color: #a6e3a1; }
+.file-failed .file-status { color: #f38ba8; }
+
+.progress-bar {
+    position: relative;
+    height: 24px;
+    background: #313244;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #a6e3a1;
+    transition: width 0.3s;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e1e2e;
+}
+
+.convert-bar {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0;
+}
+
+.log-output {
+    flex: 0 0 auto;
+    max-height: 150px;
+    overflow-y: auto;
+    background: #11111b;
+    border-radius: 6px;
+    padding: 8px;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.log-info { color: #a6adc8; }
+.log-error { color: #f38ba8; }
+
+.settings-panel {
+    background: #181825;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.settings-panel h3 {
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: #cba6f7;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px;
+}
+
+.setting-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.setting-toggle input[type="checkbox"] {
+    accent-color: #cba6f7;
+}
+
+.settings-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+}
