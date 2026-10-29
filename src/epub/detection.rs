@@ -61,7 +61,7 @@ pub fn check_drm_protection(archive: &mut EpubArchive) -> Result<(), String> {
 }
 
 pub fn is_fixed_layout_epub(opf_content: &str, archive: &mut EpubArchive) -> bool {
-    let doc = match roxmltree::Document::parse(opf_content) {
+    let doc = match crate::epub::parse_xml(opf_content) {
         Ok(d) => d,
         Err(_) => return false,
     };
@@ -127,7 +127,7 @@ fn check_epub2_fixed_layout(
 
     for path in paths {
         if let Ok(content) = archive.read_entry_string(path) {
-            if let Ok(doc) = roxmltree::Document::parse(&content) {
+            if let Ok(doc) = crate::epub::parse_xml(&content) {
                 let found = doc.descendants().any(|n| {
                     n.tag_name().name() == "option"
                         && n.attribute("name") == Some("fixed-layout")

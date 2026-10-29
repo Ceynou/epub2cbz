@@ -11,7 +11,7 @@ pub fn get_opf_file(archive: &mut EpubArchive) -> Result<String> {
     let content = archive
         .read_entry_string("META-INF/container.xml")
         .context("container.xml not found")?;
-    let doc = roxmltree::Document::parse(&content)?;
+    let doc = crate::epub::parse_xml(&content)?;
 
     for node in doc.descendants() {
         if node.tag_name().name() == "rootfile" {
@@ -36,7 +36,7 @@ pub fn parse_spine_xml(
     opf_content: &str,
     opf_path: &str,
 ) -> Result<Vec<EpubSpineEntry>> {
-    let doc = roxmltree::Document::parse(opf_content)?;
+    let doc = crate::epub::parse_xml(opf_content)?;
     let mut id_props: Vec<(String, String)> = Vec::new();
 
     for node in doc.descendants() {
@@ -83,7 +83,7 @@ pub fn parse_opf_pages_xml(
     opf_path: &str,
     opf_content: &str,
 ) -> Result<Vec<EpubPage>> {
-    let doc = roxmltree::Document::parse(opf_content)?;
+    let doc = crate::epub::parse_xml(opf_content)?;
     let (css_path, stylesheet) = get_css_file(opf_path, &doc, archive);
     const WIDE_IMAGE_RATIO: f64 = 1.125;
 
@@ -196,7 +196,7 @@ fn find_image_path_in_css(
         Err(_) => return String::new(),
     };
 
-    let doc = match roxmltree::Document::parse(&content) {
+    let doc = match crate::epub::parse_xml(&content) {
         Ok(d) => d,
         Err(_) => return String::new(),
     };
@@ -251,7 +251,7 @@ pub fn find_image_path_in_file(
             return None;
         }
 
-        let doc = roxmltree::Document::parse(&content).ok()?;
+        let doc = crate::epub::parse_xml(&content).ok()?;
 
         let svg_ns = "http://www.w3.org/2000/svg";
         let xlink_ns = "http://www.w3.org/1999/xlink";
@@ -313,7 +313,7 @@ pub fn parse_alternative_cover(
     book_full: &mut Vec<EpubPage>,
     opf_path: &str,
 ) -> Result<()> {
-    let doc = roxmltree::Document::parse(opf_content)?;
+    let doc = crate::epub::parse_xml(opf_content)?;
 
     // Find cover id from metadata
     let mut cover_id = String::new();
@@ -375,7 +375,7 @@ pub fn parse_alternative_cover(
 }
 
 pub fn is_open_manga_format(opf_content: &str) -> bool {
-    let doc = match roxmltree::Document::parse(opf_content) {
+    let doc = match crate::epub::parse_xml(opf_content) {
         Ok(d) => d,
         Err(_) => return false,
     };
@@ -395,7 +395,7 @@ pub fn parse_omf_content_js(
         Ok(c) => c,
         Err(_) => return Ok(Vec::new()),
     };
-    let doc = roxmltree::Document::parse(&opf_doc)?;
+    let doc = crate::epub::parse_xml(&opf_doc)?;
 
     // Find content.js in the manifest
     let mut js_href = String::new();

@@ -10,7 +10,7 @@ pub fn parse_metadata_xml(
     opf_content: &str,
     settings: &Settings,
 ) -> Result<EpubMetadata> {
-    let doc = roxmltree::Document::parse(opf_content)?;
+    let doc = crate::epub::parse_xml(opf_content)?;
     let mut metadata = EpubMetadata::default();
 
     // Reading direction from spine

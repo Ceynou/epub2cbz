@@ -82,7 +82,7 @@ pub fn check_duplicate_cover(
     }
 
     // Check OPF guide for cover reference
-    if let Ok(doc) = roxmltree::Document::parse(opf_content) {
+    if let Ok(doc) = crate::epub::parse_xml(opf_content) {
         for node in doc.descendants() {
             if node.tag_name().name() == "reference"
                 && node.attribute("type") == Some("cover")

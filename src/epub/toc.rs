@@ -8,7 +8,7 @@ pub fn parse_epub_toc(
     opf_content: &str,
     opf_path: &str,
 ) -> Result<Vec<EpubChapter>> {
-    let doc = roxmltree::Document::parse(opf_content)?;
+    let doc = crate::epub::parse_xml(opf_content)?;
     let nav_paths = get_nav_files(&doc, opf_path);
 
     if nav_paths.is_empty() {
@@ -38,7 +38,7 @@ pub fn parse_epub_toc(
             .replace("\x00QUOT\x00", "&quot;")
             .replace("\x00APOS\x00", "&apos;");
 
-        let toc_doc = match roxmltree::Document::parse(&content) {
+        let toc_doc = match crate::epub::parse_xml(&content) {
             Ok(d) => d,
             Err(_) => continue,
         };
@@ -188,7 +188,7 @@ pub fn parse_alternative_toc(
     book_full: &[EpubPage],
     opf_path: &str,
 ) -> Vec<EpubChapter> {
-    let doc = match roxmltree::Document::parse(opf_content) {
+    let doc = match crate::epub::parse_xml(opf_content) {
         Ok(d) => d,
         Err(_) => return chapters,
     };
@@ -242,7 +242,7 @@ fn get_toc_file(
             Err(_) => continue,
         };
 
-        let doc = match roxmltree::Document::parse(&content) {
+        let doc = match crate::epub::parse_xml(&content) {
             Ok(d) => d,
             Err(_) => break,
         };

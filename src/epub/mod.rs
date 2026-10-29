@@ -87,3 +87,14 @@ pub fn resolve_root_path(root_file: &str, relative_file: &str) -> String {
         Err(_) => decoded,
     }
 }
+
+/// Parse XML/XHTML, allowing DOCTYPE declarations (common in EPUB content documents).
+pub fn parse_xml(text: &str) -> Result<roxmltree::Document<'_>, roxmltree::Error> {
+    roxmltree::Document::parse_with_options(
+        text,
+        roxmltree::ParsingOptions {
+            allow_dtd: true,
+            ..Default::default()
+        },
+    )
+}

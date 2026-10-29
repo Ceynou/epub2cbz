@@ -13,7 +13,7 @@ pub fn get_replica_map(
     opf_content: &str,
     opf_path: &str,
 ) -> Result<(String, String)> {
-    let doc = roxmltree::Document::parse(opf_content)?;
+    let doc = crate::epub::parse_xml(opf_content)?;
 
     let mut replica_href = String::new();
     for node in doc.descendants() {
@@ -37,7 +37,7 @@ pub fn parse_replica_map_pages(
     replica_content: &str,
     replica_path: &str,
 ) -> Result<Vec<EpubSpineEntry>> {
-    let doc = roxmltree::Document::parse(replica_content)?;
+    let doc = crate::epub::parse_xml(replica_content)?;
     let mut entries = Vec::new();
 
     for node in doc.descendants() {
@@ -98,7 +98,7 @@ pub fn parse_cover(
     book_full: &mut Vec<EpubPage>,
     opf_path: &str,
 ) -> Result<()> {
-    let doc = roxmltree::Document::parse(opf_content)?;
+    let doc = crate::epub::parse_xml(opf_content)?;
 
     let mut cover_href = String::new();
     for node in doc.descendants() {
@@ -139,7 +139,7 @@ pub fn parse_cover(
 }
 
 pub fn parse_toc(replica_content: &str) -> Result<Vec<EpubChapter>> {
-    let doc = roxmltree::Document::parse(replica_content)?;
+    let doc = crate::epub::parse_xml(replica_content)?;
     let mut chapters = Vec::new();
 
     for node in doc.descendants() {
