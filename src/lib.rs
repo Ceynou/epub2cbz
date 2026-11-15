@@ -165,6 +165,13 @@ pub fn process_epub(
     let output_filename = format!("{stem}{ext}");
     let output_path = output_dir.join(&output_filename);
 
+    std::fs::create_dir_all(output_dir).with_context(|| {
+        format!(
+            "Failed to create output directory: {}",
+            output_dir.display()
+        )
+    })?;
+
     // Extract
     if settings.simple_extraction {
         simple::simple_extract_to_cbz(

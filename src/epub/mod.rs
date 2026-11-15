@@ -41,6 +41,20 @@ impl EpubArchive {
         Ok(buf)
     }
 
+    /// Read only the first `max_len` bytes of an entry.
+    pub fn read_entry_prefix(&mut self, name: &str, max_len: usize) -> Result<Vec<u8>> {
+        let idx = self
+            .name_map
+            .get(&name.to_lowercase())
+            .copied()
+            .with_context(|| format!("Entry not found: {name}"))?;
+        let mut entry = self.archive.by_index(idx)?;
+        let len = max_len.min(entry.size() as usize);
+        let mut buf = vec![0u8; len];
+        entry.read_exact(&mut buf)?;
+        Ok(buf)
+    }
+
     pub fn read_entry_string(&mut self, name: &str) -> Result<String> {
         let bytes = self.read_entry(name)?;
         // Handle BOM
