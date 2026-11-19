@@ -18,7 +18,10 @@ pub fn simple_extract_to_cbz(
     let mut zip = ZipWriter::new(file);
     let options = SimpleFileOptions::default().compression_method(settings.zip_compression());
 
-    let extension = settings.image_extension();
+    let extension = settings
+        .image_extension()
+        .unwrap_or(".jpg")
+        .to_string();
     let mut page_number = 0u32;
 
     for page in book_full {
@@ -35,9 +38,13 @@ pub fn simple_extract_to_cbz(
         };
 
         page_number += 1;
-        let img_ext = std::path::Path::new(&page.image)
-            .extension()
-            .map(|e| format!(".{}", e.to_string_lossy()))
+        let img_ext = crate::processing::image::detect_image_extension(&data)
+            .map(str::to_string)
+            .or_else(|| {
+                std::path::Path::new(&page.image)
+                    .extension()
+                    .map(|e| format!(".{}", e.to_string_lossy().to_lowercase()))
+            })
             .unwrap_or_else(|| extension.clone());
         let name = format!("{:04}{img_ext}", page_number);
 

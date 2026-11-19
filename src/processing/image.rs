@@ -12,6 +12,17 @@ pub fn get_image_dimensions(data: &[u8]) -> (u32, u32) {
         .unwrap_or((0, 0))
 }
 
+/// Extension for the format of the given image bytes.
+pub fn detect_image_extension(data: &[u8]) -> Option<&'static str> {
+    match image::guess_format(data).ok()? {
+        ImageFormat::Jpeg => Some(".jpg"),
+        ImageFormat::Png => Some(".png"),
+        ImageFormat::Gif => Some(".gif"),
+        ImageFormat::WebP => Some(".webp"),
+        _ => None,
+    }
+}
+
 pub fn compare_images(data1: &[u8], data2: &[u8]) -> bool {
     if data2.is_empty() {
         return false;

@@ -42,10 +42,12 @@ pub struct Settings {
     pub replace_series_value: String,
     pub drm_protection: bool,
     pub simple_extraction: bool,
+    pub remove_epub: bool,
 
-    // Output format
+    // Output format (all false = keep each image's original format)
     pub output_zip: bool,
     pub output_format_jpg: bool,
+    pub output_format_png: bool,
     pub output_format_webp: bool,
 
     // ComicInfo pages
@@ -106,8 +108,10 @@ impl Default for Settings {
             replace_series_value: String::new(),
             drm_protection: true,
             simple_extraction: false,
+            remove_epub: false,
             output_zip: false,
-            output_format_jpg: true,
+            output_format_jpg: false,
+            output_format_png: false,
             output_format_webp: false,
             comic_info_pages: true,
             compression_level: 0,
@@ -153,13 +157,23 @@ impl Settings {
         Ok(())
     }
 
-    pub fn image_extension(&self) -> String {
+    /// True when images should be written in their original format instead of
+    /// being re-encoded to a single output format.
+    pub fn preserves_original_format(&self) -> bool {
+        !self.output_format_jpg && !self.output_format_png && !self.output_format_webp
+    }
+
+    /// Extension for the configured explicit output format, or `None` when
+    /// original image formats should be preserved.
+    pub fn image_extension(&self) -> Option<&'static str> {
         if self.output_format_webp {
-            ".webp".to_string()
+            Some(".webp")
         } else if self.output_format_jpg {
-            ".jpg".to_string()
+            Some(".jpg")
+        } else if self.output_format_png {
+            Some(".png")
         } else {
-            ".png".to_string()
+            None
         }
     }
 

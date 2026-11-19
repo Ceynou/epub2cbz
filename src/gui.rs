@@ -330,6 +330,15 @@ fn SettingsPanel(settings: Signal<Settings>) -> Element {
                     onchange: move |v| s.write().simple_extraction = v }
                 SettingToggle { label: "DRM check".to_string(), value: s.read().drm_protection,
                     onchange: move |v| s.write().drm_protection = v }
+                SettingToggle { label: "Remove EPUB after conversion".to_string(), value: s.read().remove_epub,
+                    onchange: move |v| s.write().remove_epub = v }
+                SettingToggle { label: "Original image formats".to_string(), value: s.read().preserves_original_format(),
+                    onchange: move |v: bool| {
+                        let mut w = s.write();
+                        w.output_format_jpg = !v;
+                        w.output_format_png = false;
+                        w.output_format_webp = false;
+                    } }
             }
 
             div { class: "settings-actions",

@@ -44,7 +44,7 @@ pub struct Cli {
     #[arg(long)]
     pub page_spread: Option<bool>,
 
-    /// Output format: jpg, png, webp
+    /// Output format: original (default), jpg, png, webp
     #[arg(long)]
     pub format: Option<String>,
 
@@ -55,6 +55,10 @@ pub struct Cli {
     /// Quiet mode (no progress output)
     #[arg(short, long)]
     pub quiet: bool,
+
+    /// Remove the EPUB file after successful conversion
+    #[arg(long)]
+    pub remove_epub: Option<bool>,
 }
 
 pub fn run_cli() -> anyhow::Result<()> {
@@ -87,21 +91,32 @@ pub fn run_cli() -> anyhow::Result<()> {
         match fmt.to_lowercase().as_str() {
             "jpg" | "jpeg" => {
                 settings.output_format_jpg = true;
+                settings.output_format_png = false;
                 settings.output_format_webp = false;
             }
             "png" => {
                 settings.output_format_jpg = false;
+                settings.output_format_png = true;
                 settings.output_format_webp = false;
             }
             "webp" => {
-                settings.output_format_webp = true;
                 settings.output_format_jpg = false;
+                settings.output_format_png = false;
+                settings.output_format_webp = true;
+            }
+            "original" | "source" | "keep" => {
+                settings.output_format_jpg = false;
+                settings.output_format_png = false;
+                settings.output_format_webp = false;
             }
             _ => {}
         }
     }
     if let Some(jobs) = cli.jobs {
         settings.parallelism = jobs;
+    }
+    if let Some(remove) = cli.remove_epub {
+        settings.remove_epub = remove;
     }
 
     let mut epub_files: Vec<PathBuf> = Vec::new();

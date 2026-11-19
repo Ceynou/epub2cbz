@@ -197,6 +197,18 @@ pub fn process_epub(
 
     log(&format!("  Output: {}", output_path.display()));
 
+    if settings.remove_epub {
+        // Release the file handle before deleting (required on Windows).
+        drop(archive);
+        match std::fs::remove_file(epub_path) {
+            Ok(()) => log(&format!("  Removed: {}", epub_path.display())),
+            Err(e) => log(&format!(
+                "  Warning: failed to remove {}: {e}",
+                epub_path.display()
+            )),
+        }
+    }
+
     Ok(ProcessingResult {
         filename,
         success: true,

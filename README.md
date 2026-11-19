@@ -15,6 +15,7 @@ Pre-built binaries for Linux, macOS and Windows are available from [Releases](..
 - Image cropping (border removal), resizing, double-page splitting
 - DRM detection (refuses encrypted files)
 - Multi-threaded image processing with rayon
+- Preserves each image's original format by default (optional jpg/png/webp conversion)
 - Zero-copy passthrough when no processing is needed (fast)
 - CLI with progress bars and parallel file processing
 - Native GUI (Blitz/dioxus-native, WGPU rendered, experimental)
@@ -51,9 +52,12 @@ epub2cbz -s manga.epub
 | `--resize <WxH>` | Resize images (e.g. `1264x1680`) |
 | `--comic-info <BOOL>` | Generate ComicInfo.xml |
 | `--page-spread <BOOL>` | Page spread alignment |
-| `--format <FMT>` | Output image format: `jpg`, `png`, `webp` |
+| `--format <FMT>` | Output image format: `original` (default), `jpg`, `png`, `webp` |
 | `-j, --jobs <N>` | Parallel jobs (default: CPU count) |
 | `-q, --quiet` | Suppress output |
+| `--remove-epub <BOOL>` | Delete the source EPUB after successful conversion |
+
+By default, each page image keeps its original format (JPEG, PNG, GIF or WebP) and is copied without re-encoding. Use `--format jpg`, `--format png` or `--format webp` to convert all images to one format; processing options like crop or resize re-encode affected pages in their original format unless a format is specified.
 
 ## Build from Source
 

@@ -13,6 +13,7 @@ const WIDE_IMAGE_RATIO: f64 = 1.125;
 
 struct PageTask {
     name: String,
+    encode_ext: String,
     data: PageData,
 }
 
@@ -37,7 +38,7 @@ pub fn extract_to_cbz(
     output_path: &std::path::Path,
     log: &dyn Fn(&str),
 ) -> Result<()> {
-    let extension = settings.image_extension();
+    let target_extension = settings.image_extension();
     let needs_processing = settings.crop_images || settings.resize_images;
     let (single_w, single_h) = if settings.resize_images {
         imgproc::get_single_page_resolution(book_full, settings)
@@ -62,6 +63,7 @@ pub fn extract_to_cbz(
                 };
                 tasks.push(PageTask {
                     name,
+                    encode_ext: ".png".to_string(),
                     data: PageData::Blank(bw.max(1), bh.max(1)),
                 });
             }
@@ -86,33 +88,44 @@ pub fn extract_to_cbz(
                 && page.width > 0
                 && page.height > 0);
 
+        // In preserve mode each page keeps its own format; otherwise all pages
+        // are encoded to the configured format.
+        let source_ext = source_extension(&page.image, &data);
+        let page_ext = target_extension
+            .map(str::to_string)
+            .unwrap_or_else(|| source_ext.clone());
+
+        let needs_encode = match target_extension {
+            Some(target) => needs_processing || !extensions_match(&source_ext, target),
+            None => needs_processing,
+        };
+
         if is_double && settings.split_page_spread && i > 0 {
             page_number += 1;
-            let name1 = format_page_name(page_number, &current_chapter, &extension, settings);
+            let name1 = format_page_name(page_number, &current_chapter, &page_ext, settings);
             page_number += 1;
-            let name2 = format_page_name(page_number, &current_chapter, &extension, settings);
+            let name2 = format_page_name(page_number, &current_chapter, &page_ext, settings);
             tasks.push(PageTask {
                 name: format!("{}\0{}", name1, name2),
+                encode_ext: page_ext,
                 data: PageData::Split(data, metadata.reading_direction.is_rtl()),
             });
-        } else if needs_processing || !format_matches(&page.image, &extension) {
+        } else if needs_encode {
             let is_double_resize = is_double && single_w > 0;
             page_number += 1;
-            let name = format_page_name(page_number, &current_chapter, &extension, settings);
+            let name = format_page_name(page_number, &current_chapter, &page_ext, settings);
             tasks.push(PageTask {
                 name,
+                encode_ext: page_ext,
                 data: PageData::Process(data, is_double_resize, needs_processing),
             });
         } else {
-            // Fast path: no processing needed, format matches → passthrough
+            // Fast path: no processing needed → passthrough original bytes
             page_number += 1;
-            let src_ext = std::path::Path::new(&page.image)
-                .extension()
-                .map(|e| format!(".{}", e.to_string_lossy()))
-                .unwrap_or_else(|| extension.clone());
-            let name = format_page_name(page_number, &current_chapter, &src_ext, settings);
+            let name = format_page_name(page_number, &current_chapter, &source_ext, settings);
             tasks.push(PageTask {
                 name,
+                encode_ext: source_ext,
                 data: PageData::Passthrough(data),
             });
         }
@@ -122,17 +135,17 @@ pub fn extract_to_cbz(
     log(&format!("  Extracting {total} pages..."));
 
     // Phase 2: process images in parallel
-    let ext = extension.clone();
     let results: Vec<PageResult> = tasks
         .into_par_iter()
         .map(|task| {
-            let chunks = match task.data {
-                PageData::Passthrough(data) => {
-                    vec![(task.name.clone(), data)]
-                }
-                PageData::Blank(w, h) => {
-                    vec![(task.name.clone(), imgproc::create_blank_image_png(w, h))]
-                }
+            let PageTask {
+                name,
+                encode_ext,
+                data,
+            } = task;
+            let chunks = match data {
+                PageData::Passthrough(data) => vec![(name, data)],
+                PageData::Blank(w, h) => vec![(name, imgproc::create_blank_image_png(w, h))],
                 PageData::Process(data, is_double_resize, do_process) => {
                     match image::load_from_memory(&data) {
                         Ok(mut img) => {
@@ -149,13 +162,13 @@ pub fn extract_to_cbz(
                                     imgproc::apply_resizing(&mut img, max_w, max_h);
                                 }
                             }
-                            vec![(task.name.clone(), imgproc::encode_image(&img, &ext))]
+                            vec![(name, imgproc::encode_image(&img, &encode_ext))]
                         }
-                        Err(_) => vec![(task.name.clone(), data)],
+                        Err(_) => vec![(name, data)],
                     }
                 }
                 PageData::Split(data, is_rtl) => {
-                    let names: Vec<&str> = task.name.split('\0').collect();
+                    let names: Vec<&str> = name.split('\0').collect();
                     match image::load_from_memory(&data) {
                         Ok(img) => {
                             let (w, h) = img.dimensions();
@@ -176,8 +189,14 @@ pub fn extract_to_cbz(
                                 imgproc::apply_resizing(&mut right, single_w, single_h);
                             }
                             vec![
-                                (names[0].to_string(), imgproc::encode_image(&left, &ext)),
-                                (names[1].to_string(), imgproc::encode_image(&right, &ext)),
+                                (
+                                    names[0].to_string(),
+                                    imgproc::encode_image(&left, &encode_ext),
+                                ),
+                                (
+                                    names[1].to_string(),
+                                    imgproc::encode_image(&right, &encode_ext),
+                                ),
                             ]
                         }
                         Err(_) => vec![(names[0].to_string(), data)],
@@ -210,14 +229,26 @@ pub fn extract_to_cbz(
     Ok(())
 }
 
-fn format_matches(image_path: &str, target_ext: &str) -> bool {
-    let src = image_path.to_lowercase();
-    let tgt = target_ext.to_lowercase();
-    match tgt.as_str() {
-        ".jpg" | ".jpeg" => src.ends_with(".jpg") || src.ends_with(".jpeg"),
-        ".png" => src.ends_with(".png"),
-        ".webp" => src.ends_with(".webp"),
-        _ => false,
+/// Determine the extension to use for a page's original format, preferring
+/// the actual image data over the (sometimes incorrect) EPUB filename.
+fn source_extension(image_path: &str, data: &[u8]) -> String {
+    imgproc::detect_image_extension(data)
+        .map(str::to_string)
+        .or_else(|| {
+            std::path::Path::new(image_path)
+                .extension()
+                .map(|e| format!(".{}", e.to_string_lossy().to_lowercase()))
+                .filter(|ext| {
+                    matches!(ext.as_str(), ".jpg" | ".jpeg" | ".png" | ".gif" | ".webp")
+                })
+        })
+        .unwrap_or_else(|| ".jpg".to_string())
+}
+
+fn extensions_match(source_ext: &str, target_ext: &str) -> bool {
+    match target_ext.to_lowercase().as_str() {
+        ".jpg" | ".jpeg" => source_ext == ".jpg" || source_ext == ".jpeg",
+        other => source_ext.eq_ignore_ascii_case(other),
     }
 }
 
